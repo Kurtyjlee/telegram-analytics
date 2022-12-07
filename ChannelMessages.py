@@ -112,11 +112,10 @@ async def main(phone):
     # Getting values
     new_row = list(new_messages.values())
     new_row[0] = date.today().strftime('%d/%m/%Y')
-    last_row = df.tail()
 
     # Operations
     for i in range(1, len(df.columns), 1):
-        new_row[i] = new_row[i] - last_row.iloc[-1, i]
+        new_row[i] = new_row[i] - df.iloc[-1, i]
     
     # Adding new col
     if len(df.columns) < len(new_row):
@@ -125,7 +124,7 @@ async def main(phone):
     # Adding new row
     df.loc[len(df.index)] = new_row
 
-    # Saving to csv
+    # # Saving to csv
     df.to_csv('channel_msg.csv', index=False)
 
 with client:
