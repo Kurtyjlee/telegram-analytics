@@ -1,1 +1,1 @@
-# telegram-analytics
+# Telegram scraper to collate channel view counts
