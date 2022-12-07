@@ -7,7 +7,7 @@ from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl.functions.messages import GetHistoryRequest
 from telethon.tl.types import PeerChannel
-import csv
+import pandas as pd
 
 
 # some functions to parse json date
@@ -90,7 +90,7 @@ async def main(phone):
             break
     
     # Getting a concised version of the view count
-    new_messages = {None: None}
+    new_messages = {"Date": None}
     for msg in all_messages:
         # Reject any msg with no views
         if "views" not in msg:
@@ -105,23 +105,28 @@ async def main(phone):
             new_messages[msg["date"]] = msg["views"]
         else: 
             new_messages[msg["date"]] = new_messages[msg["date"]] + msg["views"]
-    
-    with open('channel_msg.csv', 'w') as outfile, open('channel_msg.csv', 'r') as infile:
-        reader = csv.reader(infile)
-        next(reader, None)
-        writer = csv.writer(outfile, delimiter=',', lineterminator="\n")
 
-        # New header
-        writer.writerow(list(new_messages))
-        
-        # Copy the csv file with new header
-        for row in reader:
-            writer.writerow(row)
-        
-        # Append the csv file with a new row
-        new_row = list(new_messages.values())
-        new_row[0] = date.today().strftime('%d/%m/%Y')
-        writer.writerow(new_row)
+    # Getting csv
+    df = pd.read_csv('channel_msg.csv')
+
+    # Getting values
+    new_row = list(new_messages.values())
+    new_row[0] = date.today().strftime('%d/%m/%Y')
+    last_row = df.tail()
+
+    # Operations
+    for i in range(1, len(df.columns), 1):
+        new_row[i] = new_row[i] - last_row.iloc[-1, i]
+    
+    # Adding new col
+    if len(df.columns) < len(new_row):
+        df[list(new_messages)[-1]] = None
+
+    # Adding new row
+    df.loc[len(df.index)] = new_row
+
+    # Saving to csv
+    df.to_csv('channel_msg.csv', index=False)
 
 with client:
     client.loop.run_until_complete(main(phone))
